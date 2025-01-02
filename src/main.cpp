@@ -9,8 +9,10 @@
 #include <ESP8266WiFi.h>
 #include <BlynkSimpleEsp8266.h>
 
-const char* ssid = "Hotspot_ko";
-const char* pass = "abcdefghij";
+// const char* ssid = "Hotspot_ko";
+// const char* pass = "abcdefghij";
+const char* ssid = "LUNA BOARDING HOUSE PISO WIFI";
+const char* pass = "";
 
 bool wifi_connected_state = false;
 bool blynk_connected_state = false;
@@ -42,6 +44,7 @@ void setup() {
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, pass);
     lcdNotifier("connecting to wifi");
+    delay(1000);
 
     timer.setInterval(1000L, connectToWifi);
 
