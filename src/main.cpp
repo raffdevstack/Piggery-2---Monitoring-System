@@ -71,11 +71,24 @@ void setup() {
 void loop() {
     // put your main code here, to run repeatedly:
 
+    yield();
+
+    unsigned long start = millis();
+
     if (Blynk.connected()) {
         Blynk.run();
+        yield();
     }
 
     timer.run();
+    yield();
+
+    // Optional: Debug long iterations
+    unsigned long duration = millis() - start;
+    if (duration > 100) {  // Log if loop takes more than 100ms
+        Serial.printf("Long loop: %lums\n", duration);
+    }
+
 }
 
 // put function definitions here:
@@ -134,6 +147,8 @@ void connectToWifi() {
 
 void connectToBlynk() {
 
+    yield();
+
     if (!Blynk.connected()) { // not connected
         if (blynk_connected_state) {
             lcdNotifier("Blynk lost connection!");
@@ -157,6 +172,8 @@ void connectToBlynk() {
 }
 
 void readSensors() {
+
+    yield();
 
     int result = dht.readTemperatureHumidity(temperature, humidity);
 
