@@ -2,7 +2,7 @@
 #define BLYNK_TEMPLATE_NAME "Backyard Piggery"
 #define BLYNK_AUTH_TOKEN "9m5XLGdZ6dQTm8fXzHY88WwK9jQ1NfwC"
 #define BLYNK_PRINT Serial
-#define DHT11_PIN 4    // D2 (GPIO4) for Fan
+#define DHT11_PIN D6    
 
 #include <Arduino.h>
 #include <LiquidCrystal_I2C.h>
