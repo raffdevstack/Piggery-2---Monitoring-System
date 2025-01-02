@@ -27,6 +27,7 @@ void lcdPrinter(int, int, String);
 void dispStartScreen();
 void connectToWifi();
 void lcdNotifier(String text);
+void connectToBlynk();
 
 void setup() {
     // put your setup code here, to run once:
@@ -43,11 +44,15 @@ void setup() {
     
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, pass);
-    delay(100);
+    yield();
+    delay(500);
     lcdNotifier("connecting to wifi");
     delay(2000);
 
-    timer.setInterval(1000L, connectToWifi);
+    // blynk init
+    Blynk.config(BLYNK_AUTH_TOKEN);
+
+    timer.setInterval(10000L, connectToWifi);
 
 }
 
@@ -87,6 +92,8 @@ void lcdNotifier(String text) {
 
 void connectToWifi() {
 
+    yield();
+
     if (WiFi.status() != WL_CONNECTED) { // if not connected to wifi
 
         if (wifi_connected_state){
@@ -109,4 +116,31 @@ void connectToWifi() {
         wifi_connected_state = true;
     }
 
+    connectToBlynk();
+
+}
+
+void connectToBlynk() {
+
+    if (!Blynk.connected()) { // not connected
+        if (blynk_connected_state) {
+            lcdNotifier("Blynk lost connection!");
+        } else {
+            lcdNotifier("Blynk not connected!");
+        }
+
+        blynk_connected_state = false;
+        
+        Blynk.connect(); // official blynk connector
+        
+        return;
+    }
+
+    // connected blynk
+
+    if (!blynk_connected_state){
+        Serial.println("Blynk online again!");
+        blynk_connected_state = true;
+    }
+        
 }
