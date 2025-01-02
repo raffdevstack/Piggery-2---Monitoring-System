@@ -43,8 +43,9 @@ void setup() {
     
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, pass);
+    delay(100);
     lcdNotifier("connecting to wifi");
-    delay(1000);
+    delay(2000);
 
     timer.setInterval(1000L, connectToWifi);
 
@@ -73,13 +74,14 @@ void lcdPrinter(int cursor, int row, String text) {
 void dispStartScreen() {
     lcdPrinter(1,0,"Welcome");
     lcdPrinter(0,1,"PIGGERY MONITOR");
+    delay(2000);
 }
 
 void lcdNotifier(String text) {
     lcd.clear();
     lcdPrinter(1, 0, "Info:");
     lcdPrinter(0, 1, "-" + text);
-    delay(1000);
+    delay(2000);
     lcd.clear();
 }
 
@@ -94,6 +96,7 @@ void connectToWifi() {
 
         // try to reconnect
         WiFi.reconnect();
+        delay(1000);
         lcdNotifier("reconnecting to wifi");
 
         return; // wait for the next iteration
@@ -102,8 +105,6 @@ void connectToWifi() {
     // code below is when connected to wifi
 
     if (!wifi_connected_state) {
-        lcd.clear();
-        lcdPrinter(0,0,"WiFi CONNECTED!");
         lcdNotifier("WiFi CONNECTED!");
         wifi_connected_state = true;
     }
