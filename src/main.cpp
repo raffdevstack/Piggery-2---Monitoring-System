@@ -12,7 +12,7 @@
 #include <DHT11.h>
 
 const char* ssid = "Hotspot_ko";
-const char* pass = "abcdefghij";
+const char* pass = "123456789";
 // const char* ssid = "LUNA BOARDING HOUSE PISO WIFI";
 // const char* pass = "";
 
@@ -116,7 +116,7 @@ void connectToWifi() {
         // try to reconnect
         WiFi.reconnect();
         delay(1000);
-        lcdNotifier("reconnecting to wifi");
+        lcdNotifier("wifi reconnecting");
 
         return; // wait for the next iteration
     } 
