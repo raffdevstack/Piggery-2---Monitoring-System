@@ -36,7 +36,7 @@ void lcdNotifier(String text);
 void connectToBlynk();
 void readSensors();
 void displaySensorPlaceholders();
-void displaySensorData();
+void displayAppData();
 
 void setup() {
     // put your setup code here, to run once:
@@ -64,7 +64,7 @@ void setup() {
     timer.setInterval(10000L, connectToWifi);
     timer.setInterval(2000L, readSensors);
     timer.setInterval(5000L, displaySensorPlaceholders);
-    timer.setInterval(2100L, displaySensorData);
+    timer.setInterval(2100L, displayAppData);
 
 }
 
@@ -123,7 +123,8 @@ void connectToWifi() {
 
         if (wifi_connected_state){
             lcdNotifier("WiFi DISCONNECTED!");
-            wifi_connected_state = false;
+            wifi_connected_state = false; 
+            blynk_connected_state = false;
         }
 
         // try to reconnect
@@ -150,6 +151,7 @@ void connectToBlynk() {
     yield();
 
     if (!Blynk.connected()) { // not connected
+
         if (blynk_connected_state) {
             lcdNotifier("Blynk lost connection!");
         } else {
@@ -158,7 +160,11 @@ void connectToBlynk() {
 
         blynk_connected_state = false;
         
-        Blynk.connect(); // official blynk connector
+        if (Blynk.connect()) {
+            lcdNotifier("blnk recnnected");
+        } else {
+            lcdNotifier("blnk failed recon");
+        }
         
         return;
     }
@@ -183,17 +189,36 @@ void readSensors() {
 }
 
 void displaySensorPlaceholders() {
-    lcdPrinter(0,0, "Tmp:");
-    lcdPrinter(6,0, "C");
-    lcdPrinter(8,0, "Hmd:");
-    lcdPrinter(14,0, "%");
+    lcdPrinter(0,0, "Odr:");
+    lcdPrinter(7,0, "ppm");
+    lcdPrinter(12,0, "w");
+    lcdPrinter(14,0, "b");
+
     // second row
-    lcdPrinter(0,1, "Odor Lvl:");
-    lcdPrinter(12,1, "ppm");
+    lcdPrinter(0,1, "Tmp:");
+    lcdPrinter(6,1, "C");
+    lcdPrinter(8,1, "Hmd:");
+    lcdPrinter(14,1, "%");
 }
 
-void displaySensorData() {
-    lcdPrinter(4,0, String(temperature));
-    lcdPrinter(12,0, String(humidity));
-    lcdPrinter(9,1, String(odor_level));
+void displayAppData() {
+    lcdPrinter(4,1, String(temperature));
+    lcdPrinter(12,1, String(humidity));
+    lcdPrinter(4,0, String(odor_level));
+
+    int w_state = 0;
+    int b_state = 0;
+
+    if (wifi_connected_state) 
+        w_state = 1;
+    else
+        w_state = 0;
+
+    if (blynk_connected_state)
+        b_state = 1;
+    else 
+        b_state = 0;
+    
+    lcdPrinter(13,0, String(w_state));
+    lcdPrinter(15,0, String(b_state));
 }
