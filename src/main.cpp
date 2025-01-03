@@ -154,14 +154,27 @@ void connectToBlynk() {
 
         if (blynk_connected_state) {
             lcdNotifier("Blynk lost connection!");
+            if (WiFi.disconnect()){
+                wifi_connected_state = false;
+                blynk_connected_state = false;
+            }
+            yield();
+            return;
         } else {
             lcdNotifier("Blynk not connected!");
         }
 
         blynk_connected_state = false;
         
-        Blynk.connect();
-        yield();
+        if (Blynk.connect()) {
+            yield();
+            lcdNotifier("Blynk reconnected!");
+            blynk_connected_state = true;
+        } else {
+            yield();
+            lcdNotifier("Blynk failed reconn!");
+            blynk_connected_state = false;
+        }
         
         return;
     }
@@ -169,9 +182,11 @@ void connectToBlynk() {
     // connected blynk
 
     if (!blynk_connected_state){
-        Serial.println("Blynk online again!");
-        blynk_connected_state = true;
+        lcdNotifier("Blynk connected!");
     }
+
+
+    blynk_connected_state = true;
 }
 
 void readSensors() {
@@ -187,7 +202,9 @@ void readSensors() {
 
 void displaySensorPlaceholders() {
     lcdPrinter(0,0, "Odr:");
-    lcdPrinter(7,0, "ppm");
+    if (odor_level>0){
+        lcdPrinter(7,0, "ppm");
+    }
     lcdPrinter(12,0, "w");
     lcdPrinter(14,0, "b");
 
