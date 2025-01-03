@@ -202,9 +202,14 @@ void readSensors() {
 
 void displaySensorPlaceholders() {
     lcdPrinter(0,0, "Odr:");
-    if (odor_level>0){
+
+    if (odor_level>0)
+        lcdPrinter(5,0, "ppm");
+    else if(odor_level>9)
+        lcdPrinter(6,0, "ppm");
+    else if(odor_level>99)
         lcdPrinter(7,0, "ppm");
-    }
+
     lcdPrinter(12,0, "w");
     lcdPrinter(14,0, "b");
 
