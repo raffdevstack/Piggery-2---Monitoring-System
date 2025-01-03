@@ -221,6 +221,8 @@ void readSensors() {
 
     if (result != 0) {
         lcdNotifier("DHT11 error!");
+    } else {
+        heat_index_celsius = calculateHeatIndexCelsius(temperature, humidity); 
     }
 
     // mq135 sensor
@@ -234,6 +236,7 @@ void readSensors() {
     if (correctedPPM > 0) {  // Check for valid reading
         odor_level = round(correctedPPM);
     }
+
 }
 
 void displaySensorPlaceholders() {
@@ -251,15 +254,14 @@ void displaySensorPlaceholders() {
     lcdPrinter(14,0, "b");
 
     // second row
-    lcdPrinter(0,1, "Tmp:");
-    lcdPrinter(6,1, "C");
-    lcdPrinter(8,1, "Hmd:");
-    lcdPrinter(14,1, "%");
+    lcdPrinter(0,1, "t:");
+    lcdPrinter(4,1, "C");
+    lcdPrinter(6,1, "h:");
+    lcdPrinter(10,1, "%");
+    lcdPrinter(12,1, "i:");
 }
 
 void displayAppData() {
-    lcdPrinter(4,1, String(temperature));
-    lcdPrinter(12,1, String(humidity));
     lcdPrinter(4,0, String(odor_level));
 
     int w_state = 0;
@@ -277,6 +279,11 @@ void displayAppData() {
     
     lcdPrinter(13,0, String(w_state));
     lcdPrinter(15,0, String(b_state));
+
+    // second row
+    lcdPrinter(2,1, String(temperature));
+    lcdPrinter(8,1, String(humidity));
+    lcdPrinter(14,1, String(heat_index_celsius));
 }
 
 void sendDataToBlynk() {
@@ -287,8 +294,6 @@ void sendDataToBlynk() {
     }
 
     // connected to blynk zone
-
-    heat_index_celsius = calculateHeatIndexCelsius(temperature, humidity);
 
     Blynk.virtualWrite(V0, temperature);
     Blynk.virtualWrite(V1, humidity);
@@ -341,7 +346,7 @@ void automateLightAndFan() {
     // wait for the sensor
 
     // when it is cold
-    if (heat_index_celsius < 25) {
+    if (heat_index_celsius > 10 && heat_index_celsius < 25) {
         digitalWrite(RELAY_LIGHT, LOW); // turn on
     } else {
         digitalWrite(RELAY_LIGHT, HIGH); // turn off
