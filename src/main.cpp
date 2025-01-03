@@ -3,7 +3,10 @@
 #define BLYNK_AUTH_TOKEN "9m5XLGdZ6dQTm8fXzHY88WwK9jQ1NfwC"
 #define BLYNK_PRINT Serial
 #define DHT11_PIN D6    
-#define MQ135_PIN A0    
+#define MQ135_PIN A0 
+#define RELAY_LIGHT D5
+#define RELAY_FAN D7
+#define BUZZER D8
 
 #include <Arduino.h>
 #include <LiquidCrystal_I2C.h>
@@ -25,6 +28,7 @@ int humidity = 0;
 double heat_index_celsius = 0;
 int odor_level = 0;
 float correctedPPM = 0;
+bool beeping = false;
 
 BlynkTimer timer;
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -36,13 +40,16 @@ int myFunction(int, int);
 void lcdPrinter(int, int, String);
 void dispStartScreen();
 void connectToWifi();
-void lcdNotifier(String text);
+void lcdNotifier(String);
 void connectToBlynk();
 void readSensors();
 void displaySensorPlaceholders();
 void displayAppData();
 void sendDataToBlynk();
 double calculateHeatIndexCelsius(double, double);
+void automateLightAndFan();
+void odorAlarm();
+void buzzerBeeper(int , int , unsigned long );
 
 void setup() {
     // put your setup code here, to run once:
@@ -50,6 +57,15 @@ void setup() {
 
     Serial.begin(115200);
     delay(10);
+
+    pinMode(RELAY_LIGHT, OUTPUT);  // Set GPIO14 as output
+    pinMode(RELAY_FAN, OUTPUT);    // Set GPIO13 as output
+    pinMode(BUZZER, OUTPUT);    // Set GPIO13 as output
+
+    // Start with relays AND buzzer off
+    digitalWrite(RELAY_LIGHT, HIGH);  // Start with the relay OFF for my ACTIVE LOW RELAY
+    digitalWrite(RELAY_FAN, HIGH); // Start with the relay OFF for my ACTIVE LOW RELAY
+    digitalWrite(BUZZER, LOW);
 
     lcd.init();
     lcd.clear();
@@ -72,6 +88,8 @@ void setup() {
     timer.setInterval(2000L, sendDataToBlynk);
     timer.setInterval(5000L, displaySensorPlaceholders);
     timer.setInterval(5000L, displayAppData);
+    timer.setInterval(5000L, automateLightAndFan);
+    timer.setInterval(10000L, odorAlarm);
 
 }
 
@@ -314,3 +332,52 @@ double calculateHeatIndexCelsius(double temperatureC, double humidity) {
     // Round to 2 decimal places
     return round(heatIndexC * 100.0) / 100.0;
 }
+
+void automateLightAndFan() {
+
+    // ---------- FOR LIGHTS
+
+    // when it is dark
+    // wait for the sensor
+
+    // when it is cold
+    if (heat_index_celsius < 25) {
+        digitalWrite(RELAY_LIGHT, LOW); // turn on
+    } else {
+        digitalWrite(RELAY_LIGHT, HIGH); // turn off
+    }
+
+    // ---------- FOR FANS
+    
+    if (heat_index_celsius > 45) {
+        digitalWrite(RELAY_FAN, LOW); // turn on
+    } else {
+        digitalWrite(RELAY_FAN, HIGH); // turn off
+    }
+}
+
+void odorAlarm() {
+
+    if (correctedPPM > 100 && !beeping) {
+        buzzerBeeper(500,500,5000);
+    }
+
+}
+
+void buzzerBeeper(int beepDuration, int pauseDuration, unsigned long autoStopDuration) {
+    beeping = true;
+    unsigned long startTime = millis(); // Record the start time
+    while (millis() - startTime < autoStopDuration) {
+        // Beep ON
+        digitalWrite(BUZZER, HIGH);
+        delay(beepDuration);
+        
+        // Beep OFF
+        digitalWrite(BUZZER, LOW);
+        delay(pauseDuration);
+    }
+    // Ensure the buzzer is turned off after the autostop period
+    digitalWrite(BUZZER, LOW);
+    beeping = false;
+}
+
