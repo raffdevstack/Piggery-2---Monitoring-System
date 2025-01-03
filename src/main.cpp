@@ -3,6 +3,7 @@
 #define BLYNK_AUTH_TOKEN "9m5XLGdZ6dQTm8fXzHY88WwK9jQ1NfwC"
 #define BLYNK_PRINT Serial
 #define DHT11_PIN D6    
+#define MQ135_PIN A0    
 
 #include <Arduino.h>
 #include <LiquidCrystal_I2C.h>
@@ -10,6 +11,7 @@
 #include <ESP8266WiFi.h>
 #include <BlynkSimpleEsp8266.h>
 #include <DHT11.h>
+#include <MQ135.h>
 
 const char* ssid = "Hotspot_ko";
 const char* pass = "123456789";
@@ -22,10 +24,12 @@ int temperature = 0;
 int humidity = 0;
 double heat_index_celsius = 0;
 int odor_level = 0;
+float correctedPPM = 0;
 
 BlynkTimer timer;
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 DHT11 dht(DHT11_PIN);
+MQ135 mq135_sensor(MQ135_PIN);
 
 // put function declarations here:
 int myFunction(int, int);
@@ -61,10 +65,10 @@ void setup() {
     // blynk init
     Blynk.config(BLYNK_AUTH_TOKEN);
 
-    timer.setInterval(10000L, connectToWifi);
+    timer.setInterval(20000L, connectToWifi);
     timer.setInterval(2000L, readSensors);
     timer.setInterval(5000L, displaySensorPlaceholders);
-    timer.setInterval(2100L, displayAppData);
+    timer.setInterval(5000L, displayAppData);
 
 }
 
@@ -197,6 +201,18 @@ void readSensors() {
 
     if (result != 0) {
         lcdNotifier("DHT11 error!");
+    }
+
+    // mq135 sensor
+    mq135_sensor.getRZero();
+    mq135_sensor.getCorrectedRZero(temperature, humidity);
+    mq135_sensor.getResistance();
+    mq135_sensor.getPPM();
+    
+    correctedPPM = mq135_sensor.getCorrectedPPM(temperature, humidity);
+
+    if (correctedPPM > 0) {  // Check for valid reading
+        odor_level = round(correctedPPM);
     }
 }
 
