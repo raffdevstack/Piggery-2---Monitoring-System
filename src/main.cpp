@@ -42,6 +42,7 @@ void readSensors();
 void displaySensorPlaceholders();
 void displayAppData();
 void sendDataToBlynk();
+double calculateHeatIndexCelsius(double, double);
 
 void setup() {
     // put your setup code here, to run once:
@@ -267,9 +268,49 @@ void sendDataToBlynk() {
         return;
     }
 
+    // connected to blynk zone
+
+    heat_index_celsius = calculateHeatIndexCelsius(temperature, humidity);
+
     Blynk.virtualWrite(V0, temperature);
     Blynk.virtualWrite(V1, humidity);
     Blynk.virtualWrite(V2, heat_index_celsius);
     Blynk.virtualWrite(V3, odor_level);
     yield();
+}
+
+double calculateHeatIndexCelsius(double temperatureC, double humidity) {
+    // Ensure inputs are valid
+    if (temperatureC < 0 || humidity < 0 || humidity > 100) {
+        Serial.println("Temperature must be non-negative and humidity must be between 0 and 100.");
+    }
+
+    // No heat index calculation for temperatures below 27°C
+    if (temperatureC < 27) {
+        return temperatureC;
+    }
+
+    // Convert Celsius to Fahrenheit
+    double temperatureF = (temperatureC * 9.0) / 5.0 + 32.0;
+
+    // Heat index formula in Fahrenheit
+    double T = temperatureF;
+    double RH = humidity;
+
+    double heatIndexF = 
+        -42.379 +
+        2.04901523 * T +
+        10.14333127 * RH -
+        0.22475541 * T * RH -
+        6.83783e-3 * T * T -
+        5.481717e-2 * RH * RH +
+        1.22874e-3 * T * T * RH +
+        8.5282e-4 * T * RH * RH -
+        1.99e-6 * T * T * RH * RH;
+
+    // Convert the result back to Celsius
+    double heatIndexC = ((heatIndexF - 32.0) * 5.0) / 9.0;
+
+    // Round to 2 decimal places
+    return round(heatIndexC * 100.0) / 100.0;
 }
