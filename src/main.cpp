@@ -41,6 +41,7 @@ void connectToBlynk();
 void readSensors();
 void displaySensorPlaceholders();
 void displayAppData();
+void sendDataToBlynk();
 
 void setup() {
     // put your setup code here, to run once:
@@ -67,6 +68,7 @@ void setup() {
 
     timer.setInterval(20000L, connectToWifi);
     timer.setInterval(2000L, readSensors);
+    timer.setInterval(2000L, sendDataToBlynk);
     timer.setInterval(5000L, displaySensorPlaceholders);
     timer.setInterval(5000L, displayAppData);
 
@@ -189,7 +191,6 @@ void connectToBlynk() {
         lcdNotifier("Blynk connected!");
     }
 
-
     blynk_connected_state = true;
 }
 
@@ -217,14 +218,15 @@ void readSensors() {
 }
 
 void displaySensorPlaceholders() {
+
     lcdPrinter(0,0, "Odr:");
 
-    if (odor_level>0)
-        lcdPrinter(5,0, "ppm");
-    else if(odor_level>9)
-        lcdPrinter(6,0, "ppm");
-    else if(odor_level>99)
-        lcdPrinter(7,0, "ppm");
+    if (odor_level > 99)
+        lcdPrinter(7, 0, "ppm");
+    else if (odor_level > 9)
+        lcdPrinter(6, 0, "ppm");
+    else if (odor_level > 0)
+        lcdPrinter(5, 0, "ppm");
 
     lcdPrinter(12,0, "w");
     lcdPrinter(14,0, "b");
@@ -256,4 +258,18 @@ void displayAppData() {
     
     lcdPrinter(13,0, String(w_state));
     lcdPrinter(15,0, String(b_state));
+}
+
+void sendDataToBlynk() {
+
+    yield();
+    if (!Blynk.connected()) {
+        return;
+    }
+
+    Blynk.virtualWrite(V0, temperature);
+    Blynk.virtualWrite(V1, humidity);
+    Blynk.virtualWrite(V2, heat_index_celsius);
+    Blynk.virtualWrite(V3, odor_level);
+    yield();
 }
