@@ -129,7 +129,7 @@ void connectToWifi() {
 
         // try to reconnect
         WiFi.reconnect();
-        delay(1000);
+        yield();
         lcdNotifier("wifi reconnecting");
 
         return; // wait for the next iteration
@@ -160,11 +160,8 @@ void connectToBlynk() {
 
         blynk_connected_state = false;
         
-        if (Blynk.connect()) {
-            lcdNotifier("blnk recnnected");
-        } else {
-            lcdNotifier("blnk failed recon");
-        }
+        Blynk.connect();
+        yield();
         
         return;
     }
