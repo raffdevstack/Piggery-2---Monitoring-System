@@ -29,6 +29,7 @@ double heat_index_celsius = 0;
 int odor_level = 0;
 float correctedPPM = 0;
 bool beeping = false;
+bool beeperStop = false;
 
 BlynkTimer timer;
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -363,16 +364,17 @@ void automateLightAndFan() {
 
 void odorAlarm() {
 
-    if (correctedPPM > 100 && !beeping) {
-        buzzerBeeper(500,500,5000);
+    if (correctedPPM > 300 && !beeping) {
+        buzzerBeeper(500,500,600000); // 10 mins of beeping
     }
 
 }
 
 void buzzerBeeper(int beepDuration, int pauseDuration, unsigned long autoStopDuration) {
+
     beeping = true;
     unsigned long startTime = millis(); // Record the start time
-    while (millis() - startTime < autoStopDuration) {
+    while ( (millis() - startTime < autoStopDuration) && !beeperStop) {
         // Beep ON
         digitalWrite(BUZZER, HIGH);
         delay(beepDuration);
