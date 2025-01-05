@@ -7,6 +7,7 @@
 #define RELAY_LIGHT D5
 #define RELAY_FAN D7
 #define BUZZER D8
+#define BUTTON_PIN D4
 
 #include <Arduino.h>
 #include <LiquidCrystal_I2C.h>
@@ -30,6 +31,11 @@ int odor_level = 0;
 float correctedPPM = 0;
 bool beeping = false;
 bool beeperStop = false;
+//for button
+int counter = 0;  
+bool lastButtonState = HIGH;
+bool isPressed = false;
+unsigned long waitPeriod = 0;
 
 BlynkTimer timer;
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -51,6 +57,7 @@ double calculateHeatIndexCelsius(double, double);
 void automateLightAndFan();
 void odorAlarm();
 void buzzerBeeper(int , int , unsigned long );
+bool buzzerStopper();
 
 void setup() {
     // put your setup code here, to run once:
@@ -62,6 +69,7 @@ void setup() {
     pinMode(RELAY_LIGHT, OUTPUT);  // Set GPIO14 as output
     pinMode(RELAY_FAN, OUTPUT);    // Set GPIO13 as output
     pinMode(BUZZER, OUTPUT);    // Set GPIO13 as output
+    pinMode(BUTTON_PIN, INPUT_PULLUP);
 
     // Start with relays AND buzzer off
     digitalWrite(RELAY_LIGHT, HIGH);  // Start with the relay OFF for my ACTIVE LOW RELAY
@@ -363,28 +371,64 @@ void automateLightAndFan() {
 }
 
 void odorAlarm() {
+    if (waitPeriod > 0) {
+        unsigned long startTime = millis();
+        while (millis() - startTime < waitPeriod) {
+            yield();
+        }
+        waitPeriod = 0; // Reset waitPeriod after the delay
+    }
 
     if (correctedPPM > 300 && !beeping) {
-        buzzerBeeper(500,500,600000); // 10 mins of beeping
+        buzzerBeeper(500, 500, 600000); // 10 mins of beeping
     }
-
 }
 
-void buzzerBeeper(int beepDuration, int pauseDuration, unsigned long autoStopDuration) {
 
+void buzzerBeeper(int beepDuration, int pauseDuration, unsigned long autoStopDuration) {
     beeping = true;
-    unsigned long startTime = millis(); // Record the start time
-    while ( (millis() - startTime < autoStopDuration) && !beeperStop) {
-        // Beep ON
-        digitalWrite(BUZZER, HIGH);
-        delay(beepDuration);
-        
-        // Beep OFF
-        digitalWrite(BUZZER, LOW);
-        delay(pauseDuration);
+    unsigned long startTime = millis();
+    unsigned long lastToggleTime = millis();
+    bool isBeeping = true;
+
+    while ((millis() - startTime < autoStopDuration) && !buzzerStopper()) {
+        unsigned long currentTime = millis();
+
+        // Toggle buzzer state
+        if (isBeeping && currentTime - lastToggleTime >= beepDuration) {
+            digitalWrite(BUZZER, LOW);
+            isBeeping = false;
+            lastToggleTime = currentTime;
+        } else if (!isBeeping && currentTime - lastToggleTime >= pauseDuration) {
+            digitalWrite(BUZZER, HIGH);
+            isBeeping = true;
+            lastToggleTime = currentTime;
+        }
+
+        yield(); // Allow background tasks to run
     }
+
     // Ensure the buzzer is turned off after the autostop period
     digitalWrite(BUZZER, LOW);
     beeping = false;
 }
+
+bool buzzerStopper() {
+    bool currentButtonState = digitalRead(BUTTON_PIN);
+
+    if (currentButtonState == LOW && lastButtonState == HIGH && !isPressed) {
+        lastButtonState = LOW; // Ensure state is updated
+        isPressed = true;
+        waitPeriod = 600000; // 10 mins
+        return true; // Only return after updating states
+    }
+
+    if (currentButtonState == HIGH && isPressed) {
+        lastButtonState = HIGH;
+        isPressed = false;
+    }
+
+    return false;
+}
+
 
