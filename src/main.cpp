@@ -59,6 +59,21 @@ void odorAlarm();
 void buzzerBeeper(int , int , unsigned long );
 bool buzzerStopper();
 
+BLYNK_WRITE(V4) { // LIGHT
+
+    int val = param.asInt();
+
+    digitalWrite(RELAY_LIGHT, val);
+
+}
+
+BLYNK_WRITE(V5) { // FAN
+
+    int val = param.asInt();
+
+    digitalWrite(RELAY_FAN, val);
+}
+
 void setup() {
     // put your setup code here, to run once:
     // int result = myFunction(2, 3);
