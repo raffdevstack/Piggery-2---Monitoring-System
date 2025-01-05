@@ -36,6 +36,7 @@ int counter = 0;
 bool lastButtonState = HIGH;
 bool isPressed = false;
 unsigned long waitPeriod = 0;
+bool blynk_override = false;
 
 BlynkTimer timer;
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -58,20 +59,23 @@ void automateLightAndFan();
 void odorAlarm();
 void buzzerBeeper(int , int , unsigned long );
 bool buzzerStopper();
+void blynkOverrideResetter();
 
 BLYNK_WRITE(V4) { // LIGHT
-
     int val = param.asInt();
-
     digitalWrite(RELAY_LIGHT, val);
-
+    if (val == 0){
+        blynk_override = true;
+    }
+    
 }
 
 BLYNK_WRITE(V5) { // FAN
-
     int val = param.asInt();
-
     digitalWrite(RELAY_FAN, val);
+    if (val == 0){
+        blynk_override = true;
+    }
 }
 
 void setup() {
@@ -114,6 +118,7 @@ void setup() {
     timer.setInterval(5000L, displayAppData);
     timer.setInterval(5000L, automateLightAndFan);
     timer.setInterval(10000L, odorAlarm);
+    timer.setInterval(3600000L, blynkOverrideResetter); // 1 hour interval
 
 }
 
@@ -364,6 +369,11 @@ double calculateHeatIndexCelsius(double temperatureC, double humidity) {
 
 void automateLightAndFan() {
 
+    if (blynk_override) {
+        return;
+    }
+    
+
     // ---------- FOR LIGHTS
 
     // when it is dark
@@ -394,9 +404,9 @@ void odorAlarm() {
         waitPeriod = 0; // Reset waitPeriod after the delay
     }
 
-    if (correctedPPM > 300 && !beeping) {
-        buzzerBeeper(500, 500, 600000); // 10 mins of beeping
-    }
+        if (correctedPPM > 300 && !beeping) {
+            buzzerBeeper(500, 500, 600000); // 10 mins of beeping
+        }
 }
 
 
@@ -444,6 +454,10 @@ bool buzzerStopper() {
     }
 
     return false;
+}
+
+void blynkOverrideResetter() {
+    blynk_override = false;
 }
 
 
